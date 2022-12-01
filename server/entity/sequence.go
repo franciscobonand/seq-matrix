@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 )
+
+// ! corner case: "DDDDBDDDD" only counts as one (in every direction this happens)
 
 type Sequences struct {
 	Letters []string `json:"letters"`
@@ -23,52 +27,54 @@ func (s Sequences) Validate() (bool, error) {
 	return countValidSequences(s.Letters) >= 2, nil
 }
 
-func countValidSequences(seqs []string) int {
-	validSeqs := 0
+func countValidSequences(seqs []string) uint32 {
+	var wg sync.WaitGroup
+	var validSeqs atomic.Uint32
 
-	// rows
+	wg.Add(4)
+	checkRows(&wg, &validSeqs, seqs)
+	checkColumns(&wg, &validSeqs, seqs)
+	checkPrimaryDiag(&wg, &validSeqs, seqs)
+	checkSecondaryDiag(&wg, &validSeqs, seqs)
+	wg.Wait()
+
+	return validSeqs.Load()
+}
+
+// checkRows returns number of repetitions in each line (rows)
+func checkRows(wg *sync.WaitGroup, reps *atomic.Uint32, seqs []string) {
+	defer wg.Done()
+
 	for _, seq := range seqs {
-		for _, rep := range getPossibleRepetitions() {
-			if strings.Contains(seq, rep) {
-				validSeqs++
-			}
+		if checkForRepetitions(seq) {
+			reps.Add(1)
 		}
 	}
-
-	// transpose for columns
-	// secondaryDiag for secondary diagonal values
-	// TODO: create principalDiag and add parallelism
-
-	return validSeqs
 }
 
-func getPossibleRepetitions() []string {
-	return []string{
-		"BBBB",
-		"UUUU",
-		"DDDD",
-		"HHHH",
-	}
-}
-
-func transpose(seqs []string) []string {
-	transposed := []string{}
+// checkColumns returns number of repetitions in transposed matrix (columns)
+func checkColumns(wg *sync.WaitGroup, reps *atomic.Uint32, seqs []string) {
+	defer wg.Done()
 	str := ""
+
 	for i := 0; i < len(seqs); i++ {
 		for _, seq := range seqs {
 			str = str + string(seq[i])
 		}
-		transposed = append(transposed, str)
+		if checkForRepetitions(str) {
+			reps.Add(1)
+		}
 		str = ""
 	}
-	return transposed
 }
 
-func secondaryDiag(seqs []string) []string {
-	secDiag := []string{}
+// checkSecondaryDiag returns number of repetitions in the secondary diagonals with length >= 4
+func checkSecondaryDiag(wg *sync.WaitGroup, reps *atomic.Uint32, seqs []string) {
+	defer wg.Done()
 	arrSize := len(seqs)
 	str := ""
-	for k := arrSize - (arrSize - 4) - 1; k < arrSize-1; k++ {
+
+	for k := arrSize - (arrSize - 4) - 1; k <= arrSize-1; k++ {
 		i := k
 		j := 0
 		for {
@@ -79,16 +85,11 @@ func secondaryDiag(seqs []string) []string {
 			i = i - 1
 			j = j + 1
 		}
-		secDiag = append(secDiag, str)
+		if checkForRepetitions(str) {
+			reps.Add(1)
+		}
 		str = ""
 	}
-
-	str = ""
-	for i := 0; i < arrSize; i++ {
-		str = str + (string(seqs[i][i]))
-	}
-	secDiag = append(secDiag, str)
-	str = ""
 
 	for k := 1; k <= arrSize-4; k++ {
 		i := arrSize - 1
@@ -101,9 +102,68 @@ func secondaryDiag(seqs []string) []string {
 			i = i - 1
 			j = j + 1
 		}
-		secDiag = append(secDiag, str)
+		if checkForRepetitions(str) {
+			reps.Add(1)
+		}
+		str = ""
+	}
+}
+
+// checkPrimaryDiag returns number of repetitions in the primary diagonals with length >= 4
+func checkPrimaryDiag(wg *sync.WaitGroup, reps *atomic.Uint32, seqs []string) {
+	defer wg.Done()
+	arrSize := len(seqs)
+	str := ""
+
+	for k := 1; k <= arrSize-4; k++ {
+		i := k
+		j := 0
+		for {
+			if i > arrSize-1 {
+				break
+			}
+			str = str + string(seqs[i][j])
+			i = i + 1
+			j = j + 1
+		}
+		if checkForRepetitions(str) {
+			reps.Add(1)
+		}
 		str = ""
 	}
 
-	return secDiag
+	for k := 0; k <= arrSize-4; k++ {
+		i := 0
+		j := k
+		for {
+			if j > arrSize-1 {
+				break
+			}
+			str = str + (string(seqs[i][j]))
+			i = i + 1
+			j = j + 1
+		}
+		if checkForRepetitions(str) {
+			reps.Add(1)
+		}
+		str = ""
+	}
+}
+
+func getPossibleRepetitions() []string {
+	return []string{
+		"BBBB",
+		"UUUU",
+		"DDDD",
+		"HHHH",
+	}
+}
+
+func checkForRepetitions(str string) bool {
+	for _, rep := range getPossibleRepetitions() {
+		if strings.Contains(str, rep) {
+			return true
+		}
+	}
+	return false
 }
