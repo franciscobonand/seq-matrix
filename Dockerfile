@@ -7,9 +7,9 @@ RUN go mod download
 
 RUN go build -o /seq-val
 
-FROM build
+FROM alpine:3.17
 
-WORKDIR /app
+COPY --from=build /seq-val /seq-val
 
 EXPOSE 9001
 
