@@ -6,27 +6,30 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/franciscobonand/seq-matrix/db"
 	"github.com/franciscobonand/seq-matrix/server/handler"
 )
 
 type Server struct {
-	server *http.Server
-	lg     *log.Logger
 	ctx    context.Context
+	server *http.Server
+	db     db.Database
+	lg     *log.Logger
 }
 
-func New(ctx context.Context) *Server {
+func New(ctx context.Context, db db.Database, lg *log.Logger) *Server {
 	mux := http.NewServeMux()
-	lg := log.Default()
+	h := handler.New(ctx, db, lg)
 
-	// TODO: Add handlers
-	mux.Handle("/sequence", handler.ReceiveSequence(ctx))
+	mux.Handle("/sequence", h.ReceiveSequence())
+	mux.Handle("/stats", h.GetStats())
 
 	return &Server{
 		server: &http.Server{
 			Addr:    ":9001",
 			Handler: mux,
 		},
+		db:  db,
 		lg:  lg,
 		ctx: ctx,
 	}
