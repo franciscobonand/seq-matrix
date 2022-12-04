@@ -2,7 +2,10 @@ module github.com/franciscobonand/seq-matrix
 
 go 1.19
 
-require go.mongodb.org/mongo-driver v1.11.0
+require (
+	github.com/joho/godotenv v1.4.0
+	go.mongodb.org/mongo-driver v1.11.0
+)
 
 require (
 	github.com/golang/snappy v0.0.1 // indirect
