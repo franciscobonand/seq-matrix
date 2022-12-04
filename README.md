@@ -36,7 +36,7 @@ Example of a valid sequence:
 }
 ```
 
-![Valid sequence example]("./images/valid_seq.jpg")
+![Valid sequence example](images/valid_seq.jpg)
 
 ### Stats
 
@@ -57,7 +57,7 @@ Response example:
 
 As previously said, the string array which makes a sequence is interpreted as an NxN matrix. With this, the search for four repeated letters is made in four distinct directions of the matrix: rows, columns, primary diagonal and secondary diagonal:
 
-![Validation directions]("./images/validation_dirs.jpg")
+![Validation directions](images/validation_dirs.jpg)
 
 It's important to notice two things:
 
