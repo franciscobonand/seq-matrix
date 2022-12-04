@@ -2,6 +2,62 @@
 
 This application's purpose is to check if a sequence of strings (interpreted as an NxN matrix) given as input is valid or not.
 
+## Running the application
+
+First of all, be sure to have [Golang 1.19 or higher](https://go.dev/doc/install) and [Docker/Docker Compose](https://docs.docker.com/compose/install/) installed. It also might come in handy to be able to execute [Makefile](https://makefiletutorial.com/) commands.
+
+Clone this repository locally and create an `.env` file with the same content as `.env.sample`.
+
+> When terminating the aplication, remember to run `docker-compose down` or `make compose-down` to terminate the Docker dependencies gracefully.
+
+### Via CLI
+
+In the `.env` file, comment the line `MONGO_URI="mongodb://mongodb:27017/"` and uncomment `MONGO_URI="mongodb://localhost:27017/"`.
+
+As the application stores data in MongoDB, we need to get it running. To do so, run the following command:
+
+```sh
+docker-compose up --build --d mongo mongo-admin
+```
+
+Alternatively, you can do the same using the Makefile:
+
+```sh
+make compose-up-mongo
+```
+
+Once MongoDB is up and running, we can start the application by running:
+
+```sh
+go run .
+```
+
+Or using the Makefile:
+
+```sh
+make run
+```
+
+And that's all! The server will be running on `localhost:9001` ready to receive requests.
+
+### Via Docker Compose
+
+In the `.env` file, comment the line `MONGO_URI="mongodb://localhost:27017/"` and uncomment `MONGO_URI="mongodb://mongodb:27017/"`.
+
+Then build the `docker-compose.yaml` file:
+
+```sh
+docker-compose up --build --d
+```
+
+Alternatively, you can do the same using the Makefile:
+
+```sh
+make compose-up
+```
+
+And that's all! The server will be running on `localhost:9001` ready to receive requests.
+
 ## How it works
 
 When executed, the application starts a server on `localhost:9001`, which provides the endpoint `/sequence`.
