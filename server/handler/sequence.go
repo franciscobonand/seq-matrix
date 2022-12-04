@@ -40,7 +40,7 @@ func (h *Handler) ReceiveSequence() http.HandlerFunc {
 		h.lg.Println("Decoding received payload")
 		seq := &entity.Sequences{}
 		err := json.NewDecoder(r.Body).Decode(seq)
-		if err != nil {
+		if err != nil || len(seq.Letters) < 4 {
 			h.lg.Printf("Failed to decode body: %v\n", err)
 			http.Error(w, payloadErr, http.StatusBadRequest)
 			return
