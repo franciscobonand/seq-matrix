@@ -23,7 +23,7 @@ docker-compose up --build --d mongo mongo-admin
 Alternatively, you can do the same using the Makefile:
 
 ```sh
-make compose-up-mongo
+make compose-build-mongo
 ```
 
 Once MongoDB is up and running, we can start the application by running:
@@ -53,7 +53,7 @@ docker-compose up --build --d
 Alternatively, you can do the same using the Makefile:
 
 ```sh
-make compose-up
+make compose-build
 ```
 
 And that's all! The server will be running on `localhost:9001` ready to receive requests.
@@ -122,3 +122,33 @@ It's important to notice two things:
 
 > Known issue: For matrices 9x9 or bigger, two repetitons in the same line are only counted once.  
 > Example: "DDDDHDDDD" isn't enought for the sequence to be considered valid.
+
+## Performance
+
+To measure the performance of the application locally, the load testing tool [k6](https://k6.io/docs/) was used.
+
+To run the tests yourself, pull the Docker Image (`docker pull grafana/k6`) and run `make run-loadtest`. The test cases can be changed by editing the file `loadtest/script.js`.
+
+### GET /stats
+
+For this endpoint, the test was executed with 50 virtual users and lasted 30 seconds:
+
+- 1500 requests were made
+  - Approx. 50 req/s
+- 0 errors occured
+- Average response time of 20ms
+
+### POST /sequence
+
+For this endpoint, the test was executed with 50 virtual users and lasted 30 seconds:
+
+- 1500 requests were made
+  - Approx. 50 req/s
+- 0 errors occured
+- Average response time of 4ms
+
+### Possible improvement
+
+As seen in the load tests, validating and storing sequences in a database is quite faster than getting the report of previous analyzed sequences.
+
+If this application is used in a context which the GET requests are largely more common than the POST ones, it'd be interesting to deploy a cache mechanism, such as Redis, alongside the application to improve the response time of the GET requests.
