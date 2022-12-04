@@ -5,13 +5,14 @@ services:
       context: ./
       dockerfile: Dockerfile
     container_name: api.seq-validator.dev
-    env_file: .env
     depends_on:
       - mongo
     networks:
       - seqnet
     ports:
       - "9001:9001"
+    volumes:
+      - .env:/app/.env
   mongo:
     image: mongo:5.0.14
     container_name: mongodb
